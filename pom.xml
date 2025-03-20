@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.authlete</groupId>
-    <artifactId>cbor</artifactId>
+    <artifactId>cbor-sicpa-fork</artifactId>
     <version>1.20-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>

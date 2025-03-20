@@ -1,0 +1,58 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - '*'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - 'sicpa-main'
+      - 'feature/*'
+      - 'feat/*'
+    types: [ opened, synchronize, reopened ]
+
+concurrency:
+  group: ci-release-${{ github.head_ref || github.run_id }} # matches the group of the cleanup action, so the CI is cancelled if cleanup starts (due to a PR close)
+  cancel-in-progress: ${{ !contains(github.ref, 'sicpa-main')}} # cancel if not main as we don't need the previous build
+
+env:
+  GITHUB_ACTOR: ${{ secrets.SICPABOT_USERNAME }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  SEMANTIC_RELEASE_PLUGINS: |
+    @semantic-release/changelog@6.0.3
+    @semantic-release/git@10.0.1
+    conventional-changelog-conventionalcommits@4.6.3
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: sicpa-foundations/actions/.github/workflow-actions/ci-maven-springboot-app@5db0564b3d3dba53053ceef34251986ae43833b2 # from main
+        with:
+          java-version: 17
+          ghcr-packages-username: $GITHUB_ACTOR
+          ghcr-read-packages-pat: ${{ secrets.GHCR_READ_PACKAGES_PAT_SICPABOT }}
+          enable-github-registry: false # to pull images for integration tests (not needed for this lib)
+          enable-github-packages: true
+          enable-semantic-release: true
+          enable-github-dependency-report: false
+          enable-extract-layers-from-jar: false
+          semantic-release-extra-plugins: $SEMANTIC_RELEASE_PLUGINS
+          maven-cmd: |
+            mvn -B verify --file pom.xml
+
+      - name: Create Release
+        if: ${{ github.ref == 'refs/heads/sicpa-main' }}
+        uses: sicpa-foundations/actions/external/semantic-release-action@main
+        with:
+          extra_plugins: $SEMANTIC_RELEASE_PLUGINS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHCR_WORKFLOW_DLAB_SICPABOT }}
