@@ -67,6 +67,7 @@ public class IssuerSignedBuilder
     private String mDocType;
     private Map<String, Object> mClaims;
     private ValidityInfo mValidityInfo;
+    private Status mStatus;
     private COSEKey mDeviceKey;
     private COSEEC2Key mIssuerKey;
     private List<X509Certificate> mIssuerCertChain;
@@ -247,6 +248,17 @@ public class IssuerSignedBuilder
         return this;
     }
 
+    public IssuerSignedBuilder setStatus(Status status)
+    {
+        mStatus = status;
+
+        return this;
+    }
+
+    public Status getStatus()
+    {
+        return mStatus;
+    }
 
     /**
      * Get the device key.
